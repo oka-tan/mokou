@@ -12,7 +12,6 @@ import (
 	"mokou/utils"
 	"strconv"
 	"strings"
-	"time"
 )
 
 //AsagiToEientei imports the board given described in boardConfig
@@ -79,7 +78,7 @@ func (s *Service) AsagiToEientei(boardConfig *config.BoardConfig) error {
 				resto = asagiPost.Num
 			}
 
-			timestamp := time.UnixMilli(int64(asagiPost.Timestamp)).Add(4 * time.Hour)
+			timestamp := NewYorkToUTC(int64(asagiPost.Timestamp))
 
 			name := asagiPost.Name
 			if name == nil || *name == "Anonymous" {
@@ -219,6 +218,7 @@ func (s *Service) AsagiToEientei(boardConfig *config.BoardConfig) error {
 				Capcode:    capcode,
 				Country:    country,
 				Since4Pass: since4Pass,
+				Sub: sub,
 				Com:        com,
 				Tim:        tim,
 				MD5:        asagiPost.MediaHash,
