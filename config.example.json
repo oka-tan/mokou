@@ -1,0 +1,20 @@
+{
+    "InitialNap": "5s",
+    "EienteiConfig": {
+        "ConnectionString": "postgres://eientei:eientei@db:5432/eientei?sslmode=disable"
+    },
+    "AsagiConfig": {
+        "ConnectionString": "root:123@tcp(mysql:3306)/asagi"
+    },
+    "BatchSize": 200,
+    "Boards": [
+        {
+            "Name": "p",
+            "EnableCode": false,
+            "EnableSpoiler": true,
+            "EnableFortune": false,
+            "EnableExif": true,
+            "EnableOekaki": false
+        }
+    ]
+}
