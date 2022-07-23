@@ -16,7 +16,7 @@ func main() {
 	}
 
 	initialNap, err := time.ParseDuration(conf.InitialNap)
-	if err != nil {
+	if err == nil {
 		time.Sleep(initialNap)
 	} else {
 		time.Sleep(5 * time.Second)
