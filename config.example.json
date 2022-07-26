@@ -1,20 +1,26 @@
 {
     "InitialNap": "5s",
     "KoiwaiConfig": {
-        "ConnectionString": "postgres://koiwai:koiwai@koiwai:5432/koiwai?sslmode=disable&timeout=1200s"
+        "ConnectionString": "postgres://koiwai:koiwai@koiwai:5432/koiwai?sslmode=disable&timeout=1200s",
+        "S3Endpoint": "s3:9000",
+        "S3AccessKeyID": "koiwai",
+        "S3SecretAccessKey": "12345678",
+        "S3UseSSL": false,
+        "S3BucketName": "koiwai"
     },
     "AsagiConfig": {
-        "ConnectionString": "root:123@tcp(asagi:3306)/asagi"
+        "ConnectionString": "root:123@tcp(asagi:3306)/asagi",
+        "ImagesFolder": "/media"
     },
     "BatchSize": 50,
     "Boards": [
         {
-            "Name": "p",
-            "ImportImages": false,
+            "Name": "s4s",
+            "ImportImages": true,
             "EnableCode": false,
             "EnableSpoiler": true,
-            "EnableFortune": false,
-            "EnableExif": true,
+            "EnableFortune": true,
+            "EnableExif": false,
             "EnableOekaki": false
         }
     ]

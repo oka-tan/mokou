@@ -91,7 +91,7 @@ func NewPostRestorer(boardConfig *config.BoardConfig) PostRestorer {
 	bannedTags := regexp.MustCompile("\\[banned\\](.*)\\[/banned\\]")
 	codeTags := regexp.MustCompile("\\[code\\](.*?)\\[/code\\]")
 	spoilerTags := regexp.MustCompile("\\[spoiler\\](.*?)\\[/spoiler\\]")
-	fortuneTags := regexp.MustCompile("\n\n\\[fortune color=\"(.*)\"\\](.*)\\[/fortune\\]")
+	fortuneTags := regexp.MustCompile("\n\n\\[fortune color=&quot;(.*?)&quot;\\](.*)\\[\\/fortune\\]")
 	literalTags := regexp.MustCompile("\\[(\\S*?):lit\\]")
 	mootTags := regexp.MustCompile("\\[moot\\](.*?)\\[moot\\]")
 	boldTags := regexp.MustCompile("\\[b\\](.*?)\\[\\/b\\]")

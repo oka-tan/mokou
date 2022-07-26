@@ -1,7 +1,7 @@
 version: "3.9"
 
 volumes:
-  koiwai-pgdata:
+  koiwai:
   asagi:
   s3:
 
@@ -26,8 +26,7 @@ services:
       - PGDATA=/var/lib/postgresql/data/14.3
     image: postgres:14.3-alpine
     volumes:
-      - koiwai-pgdata:/var/lib/postgresql/data
-      - /koiwai-tablespace:/koiwai-tablespace
+      - koiwai:/var/lib/postgresql/data
 
   s3:
     command: "server /data --console-address \":9001\""

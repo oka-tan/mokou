@@ -18,7 +18,12 @@ type Config struct {
 //KoiwaiConfig is the configuration struct for
 //connection to a Koiwai db instance.
 type KoiwaiConfig struct {
-	ConnectionString string
+	ConnectionString  string
+	S3Endpoint        string
+	S3AccessKeyID     string
+	S3SecretAccessKey string
+	S3UseSSL          bool
+	S3BucketName      string
 }
 
 //AsagiConfig is the configuration struct for

@@ -46,7 +46,6 @@ func (s *Service) AsagiToKoiwai(boardConfig *config.BoardConfig) error {
 
 	for {
 		asagiPosts = asagiPosts[0:0]
-		koiwaiPosts = koiwaiPosts[0:0]
 
 		err := asagiTx.NewSelect().
 			Model(&asagiPosts).
@@ -65,6 +64,7 @@ func (s *Service) AsagiToKoiwai(boardConfig *config.BoardConfig) error {
 			break
 		}
 
+		koiwaiPosts = koiwaiPosts[0:0]
 		keyset = asagiPosts[len(asagiPosts)-1].DocID
 
 		for _, asagiPost := range asagiPosts {
@@ -168,7 +168,7 @@ func (s *Service) AsagiToKoiwai(boardConfig *config.BoardConfig) error {
 
 			var mediaTimestamp *int64
 			var mediaExtension *string
-			if asagiPost.MediaOrig != nil {
+			if asagiPost.MediaOrig != nil && *asagiPost.MediaOrig != "" {
 				hasMedia = true
 				lastIndex := strings.LastIndex(*asagiPost.MediaOrig, ".")
 
@@ -183,10 +183,19 @@ func (s *Service) AsagiToKoiwai(boardConfig *config.BoardConfig) error {
 				}
 			}
 
+			var mediaInternalHash *[]byte
+			if boardConfig.ImportImages && asagiPost.MediaOrig != nil && len(*asagiPost.MediaOrig) > 6 {
+				image := asagi.FindImage(s.AsagiImagesFolder, boardConfig.Name, *asagiPost.MediaOrig)
+				mediaInternalHash = s.KoiwaiS3Service.S3UploadFile(image)
+			}
+
 			media4chanHash := Base64StringToBytes(asagiPost.MediaHash)
 
-			var mediaInternalHash *[]byte
 			var thumbnailInternalHash *[]byte
+			if boardConfig.ImportImages && asagiPost.PreviewOrig != nil && len(*asagiPost.PreviewOrig) > 6 {
+				image := asagi.FindThumbnail(s.AsagiImagesFolder, boardConfig.Name, *asagiPost.PreviewOrig)
+				thumbnailInternalHash = s.KoiwaiS3Service.S3UploadFile(image)
+			}
 
 			var mediaFileName *string
 			if asagiPost.MediaFilename != nil && *asagiPost.MediaFilename != "" {
