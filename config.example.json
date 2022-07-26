@@ -1,15 +1,16 @@
 {
     "InitialNap": "5s",
-    "EienteiConfig": {
-        "ConnectionString": "postgres://eientei:eientei@db:5432/eientei?sslmode=disable"
+    "KoiwaiConfig": {
+        "ConnectionString": "postgres://koiwai:koiwai@koiwai:5432/koiwai?sslmode=disable&timeout=1200s"
     },
     "AsagiConfig": {
-        "ConnectionString": "root:123@tcp(mysql:3306)/asagi"
+        "ConnectionString": "root:123@tcp(asagi:3306)/asagi"
     },
-    "BatchSize": 200,
+    "BatchSize": 50,
     "Boards": [
         {
             "Name": "p",
+            "ImportImages": false,
             "EnableCode": false,
             "EnableSpoiler": true,
             "EnableFortune": false,

@@ -1,4 +1,4 @@
-package eientei
+package koiwai
 
 import (
 	"database/sql"

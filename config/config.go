@@ -8,16 +8,16 @@ import (
 
 //Config is the Mokou configuration struct
 type Config struct {
-	InitialNap    string
-	EienteiConfig *EienteiConfig
-	AsagiConfig   *AsagiConfig
-	BatchSize     int
-	Boards        []BoardConfig
+	InitialNap   string
+	KoiwaiConfig *KoiwaiConfig
+	AsagiConfig  *AsagiConfig
+	BatchSize    int
+	Boards       []BoardConfig
 }
 
-//EienteiConfig is the configuration struct for
-//connection to an Eientei db instance.
-type EienteiConfig struct {
+//KoiwaiConfig is the configuration struct for
+//connection to a Koiwai db instance.
+type KoiwaiConfig struct {
 	ConnectionString string
 }
 
@@ -25,12 +25,14 @@ type EienteiConfig struct {
 //connection to an AsagiConfig db instance.
 type AsagiConfig struct {
 	ConnectionString string
+	ImagesFolder     *string
 }
 
 //BoardConfig is the configuration struct for
 //some board to be imported.
 type BoardConfig struct {
 	Name          string
+	ImportImages  bool
 	EnableCode    bool
 	EnableSpoiler bool
 	EnableFortune bool

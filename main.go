@@ -1,14 +1,18 @@
 package main
 
 import (
+	"context"
+	"log"
 	"mokou/asagi"
 	"mokou/config"
-	"mokou/eientei"
 	"mokou/importers"
+	"mokou/koiwai"
 	"time"
 )
 
 func main() {
+	log.Println("Starting mokou.")
+
 	conf, err := config.LoadConfig()
 
 	if err != nil {
@@ -23,17 +27,29 @@ func main() {
 	}
 
 	asagiDb := asagi.Connect(conf.AsagiConfig.ConnectionString)
-	eienteiDb := eientei.Connect(conf.EienteiConfig.ConnectionString)
+	koiwaiDb := koiwai.Connect(conf.KoiwaiConfig.ConnectionString)
 
 	importerService := importers.Service{
 		AsagiDb:   asagiDb,
-		EienteiDb: eienteiDb,
+		KoiwaiDb:  koiwaiDb,
 		BatchSize: conf.BatchSize,
 	}
 
+	log.Println("Beginning migration. Hopefully you've disabled autovacuum.")
+
 	for _, boardConfig := range conf.Boards {
-		if err = importerService.AsagiToEientei(&boardConfig); err != nil {
+		if err = importerService.AsagiToKoiwai(&boardConfig); err != nil {
 			panic(err)
 		}
 	}
+
+	log.Println("Fully vacuuming all tables manually and rebuilding indexes.")
+
+	if _, err = koiwaiDb.QueryContext(context.Background(), "VACUUM (FULL, ANALYZE) post"); err != nil {
+		log.Println("Error vacuuming all tables. Consider executing 'VACUUM (FULL, ANALYZE) post' manually in psql.")
+		log.Println("Migration went alright, however.")
+		panic(err)
+	}
+
+	log.Println("Done.")
 }
