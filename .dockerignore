@@ -1,6 +1,21 @@
+#Git
+.git
+.gitignore
+.github
+
+#Docker
+Dockerfile
+.dockerignore
+
+#pprof pdfs
+*.pdf
+
+#Binary
 mokou
+
+#Junk
 README.md
 LICENSE
-Dockerfile
 config.example.json
+config.json
 

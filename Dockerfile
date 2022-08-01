@@ -12,8 +12,9 @@ FROM alpine:3.16.0
 WORKDIR /app
 
 RUN apk add tzdata
+RUN adduser --disabled-password --no-create-home mokou
 
 COPY --from=build /app/mokou .
-COPY --from=build /app/config.json .
 
+USER mokou
 CMD ./mokou
