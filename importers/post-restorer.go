@@ -31,14 +31,15 @@ type PostRestorer struct {
 
 //RestoreComment restores a comments HTML
 //from the Asagi post.
-func (p *PostRestorer) RestoreComment(post *asagi.Post, exif map[string]string) *string {
+func (p *PostRestorer) RestoreComment(post *asagi.Post, exif map[string]interface{}) *string {
 	if post.Comment == nil || *post.Comment == "" {
 		return nil
 	}
 
 	rawComment, exifHasRawComment := exif["comment"]
 	if exifHasRawComment {
-		return &rawComment
+		rawCommentString := rawComment.(string)
+		return &rawCommentString
 	}
 
 	com := *post.Comment

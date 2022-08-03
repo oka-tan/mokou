@@ -3,7 +3,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 )
 
 //Config is the Mokou configuration struct
@@ -28,6 +28,7 @@ type S3Config struct {
 	S3AccessKeyID     string
 	S3SecretAccessKey string
 	S3UseSSL          bool
+	S3Region          string
 	S3BucketName      string
 }
 
@@ -53,7 +54,13 @@ type BoardConfig struct {
 //LoadConfig reads config.json and unmarshals it into a Config struct.
 //Errors might be returned due to IO or invalid JSON.
 func LoadConfig() (Config, error) {
-	blob, err := ioutil.ReadFile("config.json")
+	configFile := os.Getenv("MOKOU_CONFIG")
+
+	if configFile == "" {
+		configFile = "./config.json"
+	}
+
+	blob, err := os.ReadFile(configFile)
 
 	if err != nil {
 		return Config{}, fmt.Errorf("Error loading file config.json in project root: %s", err)

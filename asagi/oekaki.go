@@ -12,7 +12,7 @@ var OekakiProperties = []string{
 
 //HasOekaki determines whether or not the post's
 //exif field has any Oekaki data.
-func HasOekaki(exif map[string]string) bool {
+func HasOekaki(exif map[string]interface{}) bool {
 	for _, property := range OekakiProperties {
 		_, hasProperty := exif[property]
 		if hasProperty {
@@ -26,22 +26,37 @@ func HasOekaki(exif map[string]string) bool {
 //CreateOekaki generates the HTML for the Oekaki data.
 //This should then be appended to the end of the post's
 //comment field.
-func CreateOekaki(exif map[string]string) string {
+func CreateOekaki(exif map[string]interface{}) string {
 	properties := make([]string, 0, 3)
 
 	time, hasTime := exif["Time"]
 	if hasTime {
-		properties = append(properties, "Time: "+time)
+		switch time.(type) {
+		case string:
+			{
+				properties = append(properties, "Time: "+time.(string))
+			}
+		}
 	}
 
 	painter, hasPainter := exif["Painter"]
 	if hasPainter {
-		properties = append(properties, "Painter: "+painter)
+		switch time.(type) {
+		case string:
+			{
+				properties = append(properties, "Painter: "+painter.(string))
+			}
+		}
 	}
 
 	source, hasSource := exif["Source"]
 	if hasSource {
-		properties = append(properties, "Source: "+source)
+		switch source.(type) {
+		case string:
+			{
+				properties = append(properties, "Source: "+source.(string))
+			}
+		}
 	}
 
 	return "<small><b>Oekaki Post</b>(" + strings.Join(properties, ", ") + ")</small>"

@@ -8,6 +8,8 @@ import (
 	"mokou/importers"
 	"mokou/koiwai"
 	"time"
+
+	"github.com/minio/minio-go/v7"
 )
 
 func main() {
@@ -23,6 +25,24 @@ func main() {
 
 	asagiDb := asagi.Connect(conf.AsagiConfig.ConnectionString)
 	koiwaiDb, koiwaiS3Client := koiwai.Connect(conf.PostgresConfig, conf.S3Config)
+
+	bucketExists, err := koiwaiS3Client.BucketExists(context.Background(), conf.S3Config.S3BucketName)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if !bucketExists {
+		err = koiwaiS3Client.MakeBucket(context.Background(), conf.S3Config.S3BucketName, minio.MakeBucketOptions{
+			Region:        conf.S3Config.S3Region,
+			ObjectLocking: false,
+		})
+
+		if err != nil {
+			log.Fatal("Error creating S3 media bucket")
+		}
+	}
+
 	koiwaiS3Service := koiwai.S3Service{
 		KoiwaiDb:   koiwaiDb,
 		S3Client:   koiwaiS3Client,

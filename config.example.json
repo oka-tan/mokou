@@ -8,7 +8,8 @@
 		"S3AccessKeyID": "koiwai",
 		"S3SecretAccessKey": "12345678",
 		"S3UseSSL": false,
-		"S3BucketName": "koiwai"
+		"S3BucketName": "koiwai",
+		"S3Region": "us-west-1"
 	},
 	"AsagiConfig": {
 		"ConnectionString": "root:123@tcp(asagi:3306)/asagi",

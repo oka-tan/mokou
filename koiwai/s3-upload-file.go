@@ -62,7 +62,7 @@ func (s *S3Service) S3UploadFile(filename string) *[]byte {
 		return nil
 	}
 
-	if _, err := s.KoiwaiDb.NewInsert().Model(&Media{Hash: hashBytes}).Exec(context.Background()); err != nil {
+	if _, err := s.KoiwaiDb.NewInsert().Model(&Media{Hash: hashBytes}).On("CONFLICT DO NOTHING").Exec(context.Background()); err != nil {
 		return nil
 	}
 
