@@ -6,7 +6,9 @@ import (
 	"encoding/base64"
 	"io"
 	"log"
+	"mime"
 	"os"
+	"strings"
 
 	"github.com/minio/minio-go/v7"
 )
@@ -38,8 +40,22 @@ func (s *S3Service) S3UploadFile(filename string) *[]byte {
 	}
 
 	hashString := base64.URLEncoding.EncodeToString(hashBytes)
+	mediaExtension := ""
+	lastDotIndex := strings.LastIndex(filename, ".")
+	if lastDotIndex != -1 {
+		mediaExtension = filename[lastDotIndex:]
+	}
 
-	_, err = s.S3Client.FPutObject(context.Background(), s.BucketName, hashString, filename, minio.PutObjectOptions{})
+	_, err = s.S3Client.FPutObject(
+		context.Background(),
+		s.BucketName,
+		hashString,
+		filename,
+		minio.PutObjectOptions{
+			CacheControl: "public, immutable, max-age=604800",
+			ContentType:  mime.TypeByExtension(mediaExtension),
+		},
+	)
 
 	if err != nil {
 		log.Println(err)

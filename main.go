@@ -19,19 +19,14 @@ func main() {
 		panic(err)
 	}
 
-	initialNap, err := time.ParseDuration(conf.InitialNap)
-	if err == nil {
-		time.Sleep(initialNap)
-	} else {
-		time.Sleep(5 * time.Second)
-	}
+	time.Sleep(5 * time.Second)
 
 	asagiDb := asagi.Connect(conf.AsagiConfig.ConnectionString)
-	koiwaiDb, koiwaiS3Client := koiwai.Connect(conf.KoiwaiConfig)
+	koiwaiDb, koiwaiS3Client := koiwai.Connect(conf.PostgresConfig, conf.S3Config)
 	koiwaiS3Service := koiwai.S3Service{
 		KoiwaiDb:   koiwaiDb,
 		S3Client:   koiwaiS3Client,
-		BucketName: conf.KoiwaiConfig.S3BucketName,
+		BucketName: conf.S3Config.S3BucketName,
 	}
 
 	importerService := importers.Service{
@@ -39,10 +34,10 @@ func main() {
 		AsagiImagesFolder: *conf.AsagiConfig.ImagesFolder,
 		KoiwaiDb:          koiwaiDb,
 		KoiwaiS3Service:   &koiwaiS3Service,
-		BatchSize:         conf.BatchSize,
+		BatchSize:         conf.PostgresConfig.BatchSize,
 	}
 
-	log.Println("Beginning migration. Hopefully you've disabled autovacuum and created.")
+	log.Println("Beginning migration.")
 
 	for _, boardConfig := range conf.Boards {
 		if err = importerService.AsagiToKoiwai(&boardConfig); err != nil {

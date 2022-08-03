@@ -8,17 +8,22 @@ import (
 
 //Config is the Mokou configuration struct
 type Config struct {
-	InitialNap   string
-	KoiwaiConfig *KoiwaiConfig
-	AsagiConfig  *AsagiConfig
-	BatchSize    int
-	Boards       []BoardConfig
+	PostgresConfig PostgresConfig
+	S3Config       S3Config
+	AsagiConfig    AsagiConfig
+	Boards         []BoardConfig
 }
 
-//KoiwaiConfig is the configuration struct for
+//PostgresConfig is the configuration struct for
 //connection to a Koiwai db instance.
-type KoiwaiConfig struct {
-	ConnectionString  string
+type PostgresConfig struct {
+	ConnectionString string
+	BatchSize        int
+}
+
+//S3Config is the configuration struct for
+//connection to S3 storage.
+type S3Config struct {
 	S3Endpoint        string
 	S3AccessKeyID     string
 	S3SecretAccessKey string

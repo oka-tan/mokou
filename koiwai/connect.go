@@ -14,13 +14,13 @@ import (
 
 //Connect creates a connection to postgres given
 //a connection string.
-func Connect(conf *config.KoiwaiConfig) (*bun.DB, *minio.Client) {
-	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(conf.ConnectionString)))
+func Connect(postgresConfig config.PostgresConfig, s3Config config.S3Config) (*bun.DB, *minio.Client) {
+	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(postgresConfig.ConnectionString)))
 	db := bun.NewDB(sqldb, pgdialect.New())
 
-	s3Client, err := minio.New(conf.S3Endpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(conf.S3AccessKeyID, conf.S3SecretAccessKey, ""),
-		Secure: conf.S3UseSSL,
+	s3Client, err := minio.New(s3Config.S3Endpoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(s3Config.S3AccessKeyID, s3Config.S3SecretAccessKey, ""),
+		Secure: s3Config.S3UseSSL,
 	})
 
 	if err != nil {

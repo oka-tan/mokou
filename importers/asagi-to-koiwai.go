@@ -29,6 +29,12 @@ func (s *Service) AsagiToKoiwai(boardConfig *config.BoardConfig) error {
 		return err
 	}
 
+	_, err = koiwaiTx.Query(fmt.Sprintf("CREATE TABLE IF NOT EXISTS post_%s PARTITION OF post FOR VALUES IN ('%s')", boardConfig.Name, boardConfig.Name))
+
+	if err != nil {
+		return err
+	}
+
 	asagiTx, err := s.AsagiDb.BeginTx(context.Background(), &sql.TxOptions{})
 	defer asagiTx.Rollback()
 
@@ -321,7 +327,6 @@ func (s *Service) AsagiToKoiwai(boardConfig *config.BoardConfig) error {
 				Closed:                closed,
 				Posters:               posters,
 				//This field will be corrected with an update statement at the end.
-				//We leave it at zero for OPs so it can be hot updated.
 				Replies:    replies,
 				Since4Pass: since4Pass,
 			})
