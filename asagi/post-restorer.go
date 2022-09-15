@@ -1,16 +1,15 @@
-package importers
+package asagi
 
 import (
-	"mokou/asagi"
 	"mokou/config"
 	"mokou/utils"
 	"regexp"
 	"strings"
 )
 
-//PostRestorer restores the API html
+//postRestorer restores the API html
 //from an Asagi post.
-type PostRestorer struct {
+type postRestorer struct {
 	quoteLink      *regexp.Regexp
 	crossBoardLink *regexp.Regexp
 	greenText      *regexp.Regexp
@@ -29,9 +28,9 @@ type PostRestorer struct {
 	enableOekaki  bool
 }
 
-//RestoreComment restores a comments HTML
+//restoreComment restores a comment's HTML
 //from the Asagi post.
-func (p *PostRestorer) RestoreComment(post *asagi.Post, exif map[string]interface{}) *string {
+func (p *postRestorer) restoreComment(post *post, exif map[string]interface{}) *string {
 	if post.Comment == nil || *post.Comment == "" {
 		return nil
 	}
@@ -65,23 +64,23 @@ func (p *PostRestorer) RestoreComment(post *asagi.Post, exif map[string]interfac
 	com = strings.ReplaceAll(com, "\n", "<br>")
 
 	if p.enableExif {
-		if asagi.HasExif(exif) {
-			com += asagi.CreateExifTable(exif, post.Num)
+		if hasExif(exif) {
+			com += createExifTable(exif, post.Num)
 		}
 	}
 
 	if p.enableOekaki {
-		if asagi.HasOekaki(exif) {
-			com += asagi.CreateOekaki(exif)
+		if hasOekaki(exif) {
+			com += createOekaki(exif)
 		}
 	}
 
 	return &com
 }
 
-//NewPostRestorer constructs a PostRestorer from a board configuration
-func NewPostRestorer(boardConfig *config.BoardConfig) PostRestorer {
-	//All of the regex is written under the assumtion that:
+//newPostRestorer constructs a PostRestorer from a board configuration
+func newPostRestorer(boardConfig *config.AsagiBoardConfig) postRestorer {
+	//All of the regex is written under the assumptions that:
 	//", &, < and > have been converted to &quot;
 	//&amp; &lt; and &gt;
 	//But \n remains as \n
@@ -97,7 +96,7 @@ func NewPostRestorer(boardConfig *config.BoardConfig) PostRestorer {
 	mootTags := regexp.MustCompile("\\[moot\\](.*?)\\[moot\\]")
 	boldTags := regexp.MustCompile("\\[b\\](.*?)\\[\\/b\\]")
 
-	return PostRestorer{
+	return postRestorer{
 		quoteLink:      quoteLink,
 		crossBoardLink: crossBoardLink,
 		greenText:      greenText,

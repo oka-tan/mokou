@@ -7,7 +7,8 @@ import (
 
 //CameraSpecificProperties are the EXIF properties
 //specific to the Camera.
-var CameraSpecificProperties = []string{
+//This list is most likely incomplete.
+var cameraSpecificProperties = []string{
 	"Camera Model",
 	"Photographer",
 	"Camera Software",
@@ -29,7 +30,8 @@ var CameraSpecificProperties = []string{
 
 //ImageSpecificProperties are the EXIF
 //properties specific to the Image.
-var ImageSpecificProperties = []string{
+//This list is most likely incomplete.
+var imageSpecificProperties = []string{
 	"Exposure Time",
 	"Image Orientation",
 	"Horizontal Resolution",
@@ -69,16 +71,16 @@ var ImageSpecificProperties = []string{
 	"Subject Distance Range",
 }
 
-//HasExif checks if the Asagi exif field has any actual EXIF data in it.
-func HasExif(exif map[string]interface{}) bool {
-	for _, property := range CameraSpecificProperties {
+//hasExif checks if the Asagi exif field has any actual EXIF data in it.
+func hasExif(exif map[string]interface{}) bool {
+	for _, property := range cameraSpecificProperties {
 		_, exists := exif[property]
 		if exists {
 			return true
 		}
 	}
 
-	for _, property := range ImageSpecificProperties {
+	for _, property := range imageSpecificProperties {
 		_, exists := exif[property]
 		if exists {
 			return true
@@ -88,14 +90,14 @@ func HasExif(exif map[string]interface{}) bool {
 	return false
 }
 
-//CreateExifTable generates the EXIF HTML table given the EXIF field
+//createExifTable generates the EXIF HTML table given the EXIF field
 //from Asagi and the post number.
-func CreateExifTable(exif map[string]interface{}, postNumber uint) string {
+func createExifTable(exif map[string]interface{}, postNumber uint) string {
 	var b strings.Builder
 
 	fmt.Fprintf(&b, "<br><br><span class=\"abbr\">[EXIF data available. Click <a href=\"javascript:void(0)\" onclick=\"toggle('exif%d')\">here</a> to show/hide.]</span><br><table class=\"exif\" id=\"exif%d\"><tr><td colspan=\"2\"><b>Camera-Specific Properties:</b></td></tr>", postNumber, postNumber)
 
-	for _, property := range CameraSpecificProperties {
+	for _, property := range cameraSpecificProperties {
 		value, exists := exif[property]
 		if exists {
 			switch value.(type) {
@@ -113,7 +115,7 @@ func CreateExifTable(exif map[string]interface{}, postNumber uint) string {
 
 	b.WriteString("<tr><td colspan=\"2\"><b>Image-Specific Properties:</b></td></tr>")
 
-	for _, property := range ImageSpecificProperties {
+	for _, property := range imageSpecificProperties {
 		value, exists := exif[property]
 		if exists {
 			switch value.(type) {

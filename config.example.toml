@@ -1,0 +1,63 @@
+# Postgres configuration for target DB
+[postgres]
+# postgres://user:password@host:port/database?sslmode=disable&timeout=1200s
+connection_string = "postgres://koiwai:koiwai@koiwai:5432/koiwai?sslmode=disable&timeout=1200s"
+# Batch size for inserts. Might be ignored
+# by importers for obvious reasons, i.e.
+# data is invariably grouped by thread in badger data,
+# so we just insert the entire thread in one go.
+batch_size = 50
+
+# S3 configuration for target media bucket
+[media]
+s3_endpoint = "s3:9000"
+s3_access_key_id = "minio"
+s3_secret_access_key = "12345678"
+s3_use_ssl = false
+s3_bucket_name = "ayase-media"
+s3_region = "us-east-1"
+
+# S3 configuration for target thumbnails bucket
+[thumbnails]
+s3_endpoint = "s3:9000"
+s3_access_key_id = "minio"
+s3_secret_access_key = "12345678"
+s3_use_ssl = false
+s3_bucket_name = "ayase-thumbnails"
+s3_region = "us-east-1"
+
+# S3 configuration for target oekaki bucket
+# Doesn't do anything right now because there aren't any
+# schemas we can import oekaki from
+[oekaki]
+s3_endpoint = "s3:9000"
+s3_access_key_id = "minio"
+s3_secret_access_key = "12345678"
+s3_use_ssl = false
+s3_bucket_name = "ayase-oekaki"
+s3_region = "us-east-1"
+
+# Configuration for an Asagi/Neofuuka instance
+# you want to import data from
+[asagi]
+# user:password@tcp(host:port)/database
+connection_string = "root:123@tcp(asagi:3306)/asagi"
+images_folder = "/media"
+
+[[asagi.boards]]
+name = "po"
+import_images = true
+enable_code = false
+enable_spoiler = false
+enable_fortune = false
+enable_exif = false
+enable_oekaki = false
+
+# Configuration for a genetically_enhanced_badger
+# db dump you want to import data from
+[badger]
+json_folder = "/badger"
+
+[[badger.boards]]
+name = "po"
+

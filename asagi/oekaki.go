@@ -2,18 +2,18 @@ package asagi
 
 import "strings"
 
-//OekakiProperties are the possible EXIF field
+//oekakiProperties are the possible EXIF field
 //properties relating to Oekaki data.
-var OekakiProperties = []string{
+var oekakiProperties = []string{
 	"Time",
 	"Painter",
 	"Source",
 }
 
-//HasOekaki determines whether or not the post's
+//hasOekaki determines whether or not the post's
 //exif field has any Oekaki data.
-func HasOekaki(exif map[string]interface{}) bool {
-	for _, property := range OekakiProperties {
+func hasOekaki(exif map[string]interface{}) bool {
+	for _, property := range oekakiProperties {
 		_, hasProperty := exif[property]
 		if hasProperty {
 			return true
@@ -23,10 +23,10 @@ func HasOekaki(exif map[string]interface{}) bool {
 	return false
 }
 
-//CreateOekaki generates the HTML for the Oekaki data.
+//createOekaki generates the HTML for the Oekaki data.
 //This should then be appended to the end of the post's
 //comment field.
-func CreateOekaki(exif map[string]interface{}) string {
+func createOekaki(exif map[string]interface{}) string {
 	properties := make([]string, 0, 3)
 
 	time, hasTime := exif["Time"]

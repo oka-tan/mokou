@@ -1,10 +1,10 @@
-package importers
+package asagi
 
 import "time"
 
 //NewYorkToUTC converts an integer timestamp in New York to
 //UTC
-func NewYorkToUTC(i int64) time.Time {
+func newYorkToUTC(i int64) time.Time {
 	newYorkLocation, err := time.LoadLocation("America/New_York")
 
 	if err != nil {

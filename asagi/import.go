@@ -1,12 +1,13 @@
-package importers
+package asagi
 
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
-	"mokou/asagi"
+	"mime"
 	"mokou/config"
 	"mokou/koiwai"
 	"mokou/utils"
@@ -14,24 +15,28 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/minio/minio-go/v7"
 )
 
-//AsagiToKoiwai imports the board given described in boardConfig
+//Import imports the board given described in boardConfig
 //from Asagi to Koiwai
-func (s *Service) AsagiToKoiwai(boardConfig *config.BoardConfig) error {
+func (s *Service) Import(boardConfig *config.AsagiBoardConfig) error {
 	log.Printf("Importing data from Asagi to Koiwai for board %s\n", boardConfig.Name)
 
-	postRestorer := NewPostRestorer(boardConfig)
+	//Compiles a bunch of regex
+	postRestorer := newPostRestorer(boardConfig)
 
-	koiwaiTx, err := s.KoiwaiDb.BeginTx(context.Background(), &sql.TxOptions{})
-	defer koiwaiTx.Rollback()
+	tx, err := s.Pg.BeginTx(context.Background(), &sql.TxOptions{})
+	defer tx.Rollback()
 
 	if err != nil {
 		return err
 	}
 
-	_, err = koiwaiTx.Query(fmt.Sprintf("CREATE TABLE IF NOT EXISTS post_%s PARTITION OF post FOR VALUES IN ('%s')", boardConfig.Name, boardConfig.Name))
+	_, err = tx.Query(fmt.Sprintf("CREATE TABLE IF NOT EXISTS post_%s PARTITION OF post FOR VALUES IN ('%s')", boardConfig.Name, boardConfig.Name))
 
+	//This error can occur because the partition exists with a different name
 	if err != nil {
 		return err
 	}
@@ -43,11 +48,11 @@ func (s *Service) AsagiToKoiwai(boardConfig *config.BoardConfig) error {
 		return err
 	}
 
-	asagiPosts := make([]asagi.Post, 0, s.BatchSize)
+	asagiPosts := make([]post, 0, s.BatchSize)
 	koiwaiPosts := make([]koiwai.Post, 0, s.BatchSize)
 
 	//We use a single now value for all of the time_createds and last_modifieds
-	//to cheat postgres into compressing shit really well.
+	//to cheat postgres into compressing shit better
 	now := time.Now()
 	var keyset uint
 
@@ -57,7 +62,7 @@ func (s *Service) AsagiToKoiwai(boardConfig *config.BoardConfig) error {
 		err := asagiTx.NewSelect().
 			Model(&asagiPosts).
 			ModelTableExpr(fmt.Sprintf("`%s` AS post", boardConfig.Name)).
-			Where("`subnum` = 0").
+			Where("`subnum` = 0"). //filters out ghost posts
 			Where("`doc_id` > ?", keyset).
 			Order("doc_id ASC").
 			Limit(s.BatchSize).
@@ -79,7 +84,7 @@ func (s *Service) AsagiToKoiwai(boardConfig *config.BoardConfig) error {
 
 		wg.Add(len(asagiPosts))
 		for _, asagiPost := range asagiPosts {
-			go func(asagiPost asagi.Post) {
+			go func(asagiPost post) {
 				defer wg.Done()
 
 				exif := make(map[string]interface{})
@@ -103,7 +108,7 @@ func (s *Service) AsagiToKoiwai(boardConfig *config.BoardConfig) error {
 
 				deleted := asagiPost.Deleted
 
-				timePosted := NewYorkToUTC(int64(asagiPost.Timestamp))
+				timePosted := newYorkToUTC(int64(asagiPost.Timestamp))
 
 				name := asagiPost.Name
 				if name == nil || *name == "" || *name == "Anonymous" {
@@ -184,7 +189,7 @@ func (s *Service) AsagiToKoiwai(boardConfig *config.BoardConfig) error {
 
 				var comment *string
 				if asagiPost.Comment != nil && *asagiPost.Comment != "" {
-					comment = postRestorer.RestoreComment(&asagiPost, exif)
+					comment = postRestorer.restoreComment(&asagiPost, exif)
 				}
 
 				hasMedia := false
@@ -212,19 +217,7 @@ func (s *Service) AsagiToKoiwai(boardConfig *config.BoardConfig) error {
 					}
 				}
 
-				var mediaInternalHash *[]byte
-				if boardConfig.ImportImages && asagiPost.MediaOrig != nil && len(*asagiPost.MediaOrig) > 6 {
-					image := asagi.FindImage(s.AsagiImagesFolder, boardConfig.Name, *asagiPost.MediaOrig)
-					mediaInternalHash = s.KoiwaiS3Service.S3UploadFile(image)
-				}
-
-				media4chanHash := Base64StringToBytes(asagiPost.MediaHash)
-
-				var thumbnailInternalHash *[]byte
-				if boardConfig.ImportImages && asagiPost.PreviewOrig != nil && len(*asagiPost.PreviewOrig) > 6 {
-					image := asagi.FindThumbnail(s.AsagiImagesFolder, boardConfig.Name, *asagiPost.PreviewOrig)
-					thumbnailInternalHash = s.KoiwaiS3Service.S3UploadFile(image)
-				}
+				media4chanHash := base64StringToBytes(asagiPost.MediaHash)
 
 				var mediaFileName *string
 				var mediaExtension *string
@@ -232,13 +225,23 @@ func (s *Service) AsagiToKoiwai(boardConfig *config.BoardConfig) error {
 					hasMedia = true
 					lastIndex := strings.LastIndex(*asagiPost.MediaFilename, ".")
 
-					if lastIndex != -1 && lastIndex != 0 {
-						mediaFileNameV := (*asagiPost.MediaFilename)[:lastIndex]
-						mediaFileName = &mediaFileNameV
+					if lastIndex != -1 {
+						if lastIndex == 0 {
+							mediaFileName = nil
+						} else {
+							mediaFileNameV := (*asagiPost.MediaFilename)[:lastIndex]
+							mediaFileName = &mediaFileNameV
+						}
 						mediaExtensionV := (*asagiPost.MediaFilename)[lastIndex+1:]
-						mediaExtension = &mediaExtensionV
-					}
 
+						if mediaExtensionV == "web" {
+							mediaExtensionV = "webm"
+						}
+
+						mediaExtension = &mediaExtensionV
+					} else {
+						log.Printf("The goofy media filename is %s\n", *asagiPost.MediaFilename)
+					}
 				}
 
 				var mediaSize *int
@@ -326,6 +329,82 @@ func (s *Service) AsagiToKoiwai(boardConfig *config.BoardConfig) error {
 					}
 				}
 
+				var thumbnailInternalHash *[]byte
+				if boardConfig.ImportThumbnails && asagiPost.PreviewOrig != nil && len(*asagiPost.PreviewOrig) > 6 {
+					thumbnail := findThumbnail(s.AsagiImagesFolder, boardConfig.Name, *asagiPost.PreviewOrig)
+					thumbnailInternalHash = utils.HashFile(thumbnail)
+
+					if thumbnailInternalHash != nil {
+						alreadyExists, err := s.Pg.NewSelect().
+							Model(&koiwai.Thumbnail{}).
+							Where("hash = ?", *thumbnailInternalHash).
+							Exists(context.Background())
+
+						if err != nil {
+							log.Fatalf("Error checking if thumbnail exists: %s", err)
+						}
+
+						if !alreadyExists {
+							_, err := s.S3MediaClient.FPutObject(
+								context.Background(),
+								*s.S3ThumbnailsBucket,
+								base64.URLEncoding.EncodeToString(*thumbnailInternalHash),
+								thumbnail,
+								minio.PutObjectOptions{
+									CacheControl: "private, immutable, max-age=604800",
+									ContentType:  "image/jpg",
+								},
+							)
+
+							if err != nil {
+								log.Fatalf("Error putting file %s on s3: %s", thumbnail, err)
+							}
+
+							if _, err := s.Pg.NewInsert().Model(&koiwai.Thumbnail{Hash: *thumbnailInternalHash}).On("CONFLICT (hash) DO NOTHING").Exec(context.Background()); err != nil {
+								log.Fatalf("Error putting file hash on db: %s", err)
+							}
+						}
+					}
+				}
+
+				var mediaInternalHash *[]byte
+				if boardConfig.ImportImages && asagiPost.MediaOrig != nil && len(*asagiPost.MediaOrig) > 6 {
+					image := findImage(s.AsagiImagesFolder, boardConfig.Name, *asagiPost.MediaOrig)
+					mediaInternalHash = utils.HashFile(image)
+
+					if mediaInternalHash != nil {
+						alreadyExists, err := s.Pg.NewSelect().
+							Model(&koiwai.Media{}).
+							Where("hash = ?", *mediaInternalHash).
+							Exists(context.Background())
+
+						if err != nil {
+							log.Fatalf("Error checking if media exists: %s", err)
+						}
+
+						if !alreadyExists {
+							_, err := s.S3MediaClient.FPutObject(
+								context.Background(),
+								*s.S3MediaBucket,
+								base64.URLEncoding.EncodeToString(*mediaInternalHash),
+								image,
+								minio.PutObjectOptions{
+									CacheControl: "private, immutable, max-age=604800",
+									ContentType:  mime.TypeByExtension("." + *mediaExtension),
+								},
+							)
+
+							if err != nil {
+								log.Fatalf("Error putting file %s on s3: %s", image, err)
+							}
+
+							if _, err := s.Pg.NewInsert().Model(&koiwai.Media{Hash: *mediaInternalHash}).On("CONFLICT (hash) DO NOTHING").Exec(context.Background()); err != nil {
+								log.Fatalf("Error putting file hash on db: %s", err)
+							}
+						}
+					}
+				}
+
 				mutex.Lock()
 				koiwaiPosts = append(koiwaiPosts, koiwai.Post{
 					Board:                 boardConfig.Name,
@@ -375,7 +454,7 @@ func (s *Service) AsagiToKoiwai(boardConfig *config.BoardConfig) error {
 
 		wg.Wait()
 
-		_, err = koiwaiTx.NewInsert().
+		_, err = tx.NewInsert().
 			Model(&koiwaiPosts).
 			On("CONFLICT DO NOTHING").
 			Returning("NULL").
@@ -386,14 +465,14 @@ func (s *Service) AsagiToKoiwai(boardConfig *config.BoardConfig) error {
 		}
 	}
 
-	replyCountCte := koiwaiTx.NewSelect().
+	replyCountCte := tx.NewSelect().
 		Model(&koiwai.Post{}).
 		Column("thread_number").
 		ColumnExpr("COUNT(*) - 1 AS replies").
 		Where("board = ?", boardConfig.Name).
 		Group("thread_number")
 
-	_, err = koiwaiTx.NewUpdate().
+	_, err = tx.NewUpdate().
 		With("_reply_counts", replyCountCte).
 		Model(&koiwai.Post{}).
 		TableExpr("_reply_counts").
@@ -407,7 +486,7 @@ func (s *Service) AsagiToKoiwai(boardConfig *config.BoardConfig) error {
 		return err
 	}
 
-	if err := koiwaiTx.Commit(); err != nil {
+	if err := tx.Commit(); err != nil {
 		return err
 	}
 

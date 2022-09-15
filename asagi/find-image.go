@@ -2,7 +2,8 @@ package asagi
 
 import "strings"
 
-func FindImage(imageFolder string, board string, mediaOrig string) string {
+//Finds the image in the folder
+func findImage(imageFolder string, board string, mediaOrig string) string {
 	var b strings.Builder
 	b.Grow(len(imageFolder) + 1 + len(board) + 1 + 7 + 4 + 1 + 2 + 1 + len(mediaOrig))
 

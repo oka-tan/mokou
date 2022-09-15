@@ -4,9 +4,11 @@ import (
 	"github.com/uptrace/bun"
 )
 
-//Post is a post in the Asagi schema.
+//post is a post in the Asagi schema.
 //This includes OPs.
-type Post struct {
+type post struct {
+	//The table name will be overriden later for
+	//each board
 	bun.BaseModel `bun:"table:post,alias:post"`
 
 	//Auto-incremented pk.
