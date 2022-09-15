@@ -161,12 +161,25 @@ func (s *Service) Import(boardConfig *config.AsagiBoardConfig) error {
 
 				var country *string
 				var flag *string
-				trollCountryCode, trollCountryCodeAvailable := exif["troll_country_code"]
-				if trollCountryCodeAvailable {
-					switch trollCountryCode.(type) {
+
+				neofuukaTrollCountryCode, neofuukaTrollCountryCodeAvailable := exif["troll_country_code"]
+				asagiTrollCountryCode, asagiTrollCountryCodeAvailable := exif["trollCountry"]
+				if neofuukaTrollCountryCodeAvailable {
+					switch neofuukaTrollCountryCode.(type) {
 					case string:
 						{
-							trollCountryCodeString := trollCountryCode.(string)
+							trollCountryCodeString := neofuukaTrollCountryCode.(string)
+
+							if len(trollCountryCodeString) == 2 {
+								flag = &trollCountryCodeString
+							}
+						}
+					}
+				} else if asagiTrollCountryCodeAvailable {
+					switch asagiTrollCountryCode.(type) {
+					case string:
+						{
+							trollCountryCodeString := asagiTrollCountryCode.(string)
 
 							if len(trollCountryCodeString) == 2 {
 								flag = &trollCountryCodeString
