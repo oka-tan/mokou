@@ -20,6 +20,7 @@ type postRestorer struct {
 	literalTags    *regexp.Regexp
 	mootTags       *regexp.Regexp
 	boldTags       *regexp.Regexp
+	shiftJisTags   *regexp.Regexp
 
 	enableCode    bool
 	enableSpoiler bool
@@ -49,6 +50,7 @@ func (p *postRestorer) restoreComment(post *post, exif map[string]interface{}) *
 	com = p.bannedTags.ReplaceAllString(com, "<strong style=\"color:red\">$1</strong>")
 	com = p.mootTags.ReplaceAllString(com, "<div style=\"padding: 5px;margin-left: .5em;border-color: #faa;bprder: 2px dashed rgba(255,0,0,.1);border-radius: 2px\">$1</div>")
 	com = p.boldTags.ReplaceAllString(com, "<strong>$1</strong>")
+	com = p.shiftJisTags.ReplaceAllString(com, "<span class=\"sjis\">$1</span>")
 
 	if p.enableCode {
 		com = p.codeTags.ReplaceAllString(com, "<pre>$1</pre>")
@@ -95,6 +97,7 @@ func newPostRestorer(boardConfig *config.AsagiBoardConfig) postRestorer {
 	literalTags := regexp.MustCompile("\\[(\\S*?):lit\\]")
 	mootTags := regexp.MustCompile("\\[moot\\](.*?)\\[moot\\]")
 	boldTags := regexp.MustCompile("\\[b\\](.*?)\\[\\/b\\]")
+	shiftJisTags := regexp.MustCompile("\\[shiftjis\\](.*?)\\[\\/shiftjis\\]")
 
 	return postRestorer{
 		quoteLink:      quoteLink,
@@ -107,6 +110,7 @@ func newPostRestorer(boardConfig *config.AsagiBoardConfig) postRestorer {
 		literalTags:    literalTags,
 		mootTags:       mootTags,
 		boldTags:       boldTags,
+		shiftJisTags:   shiftJisTags,
 
 		enableCode:    boardConfig.EnableCode,
 		enableFortune: boardConfig.EnableFortune,
